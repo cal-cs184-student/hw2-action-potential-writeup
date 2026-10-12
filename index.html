@@ -189,7 +189,7 @@
 				<figure><img src="images/part1_level2.png"/><figcaption>Level 2: 4 points.</figcaption></figure>
 				<figure><img src="images/part1_level3.png"/><figcaption>Level 3: 3 points.</figcaption></figure>
 				<figure><img src="images/part1_level4.png"/><figcaption>Level 4: 2 points.</figcaption></figure>
-				<figure><img src="images/part1_level5.png"/><figcaption>Level 5: the final point on the curve (toggle <b>C</b> for the full curve).</figcaption></figure>
+				<figure><img src="images/part1_level5.png"/><figcaption>Level 5: the single evaluated point, shown with the full Bezier curve drawn (<b>C</b>).</figcaption></figure>
 			</div>
 			<p>
 			Here's a different version of the same curve. I dragged the control points around and
@@ -198,7 +198,7 @@
 			</p>
 			<figure>
 				<img src="images/part1_moved.png"/>
-				<figcaption>The same curve after moving control points and changing \(t\) via scroll.</figcaption>
+				<figcaption>The same curve after moving control points and changing \(t\), with the full curve drawn (<b>C</b>).</figcaption>
 			</figure>
 
 			<h3>Part 2: Bezier surfaces with separable 1D de Casteljau</h3>
@@ -297,9 +297,9 @@
 			elements and wired everything with <code>setNeighbors</code>. I reused the two original
 			halfedges on the split edge (as \(v_0 \to m\) and \(v_1 \to m\)) and created the other six
 			from scratch, which kept the allocation count honest and made it easier to reason about. The
-			spec says the new vertex's halfedge should run <i>along</i> the edge that was split, not along
-			one of the new cross edges, so I point <code>m-&gt;halfedge()</code> at the halfedge on the
-			original edge. I also set the <code>isNew</code> flags here. The two edges along the original
+			code comments say the new vertex's halfedge should run <i>along</i> the edge that was split,
+			not along one of the new cross edges, so I point <code>m-&gt;halfedge()</code> at the halfedge
+			on the original edge. I also set the <code>isNew</code> flags here. The two edges along the original
 			split line are not new, and the two that cut across the old triangles are. Part 6 depends on
 			this flag.
 			</p>
@@ -357,29 +357,64 @@
 			</ol>
 			<p>
 			Some things I noticed while playing with it. Sharp corners and edges round off and lose their
-			crispness as you subdivide. The cube is the clearest example. It melts into a rounded blob
-			because the smoothing rule has no idea an edge was supposed to stay sharp. You can reduce this
-			by splitting edges near the feature before subdividing. That raises the vertex density there,
-			so the limit surface stays closer to the original crease. The cube also looks lopsided at
-			first because its triangulation is asymmetric (the two triangles on each face aren't
-			symmetric). If you flip and split edges to make the mesh symmetric before subdividing, it
-			converges to a symmetric rounded cube.
+			crispness as you subdivide, because the smoothing rule has no idea an edge was supposed to
+			stay sharp. The cow below shows the general effect: each round quadruples the triangle count
+			and the surface relaxes toward something smooth.
 			</p>
 			<div class="grid">
-				<figure><img src="images/part6_level0.png"/><figcaption>Original mesh.</figcaption></figure>
+				<figure><img src="images/part6_level0.png"/><figcaption>Original cow.</figcaption></figure>
 				<figure><img src="images/part6_level1.png"/><figcaption>After one round of Loop subdivision (<b>L</b>).</figcaption></figure>
 				<figure><img src="images/part6_level2.png"/><figcaption>After two rounds.</figcaption></figure>
 				<figure><img src="images/part6_level3.png"/><figcaption>After three rounds. The sharp features have rounded off.</figcaption></figure>
 			</div>
+
+			<h4>Why the cube subdivides asymmetrically</h4>
 			<p>
-			To show the effect of preprocessing, the cube on the left is subdivided directly, and the one
-			on the right was split and flipped first to make it symmetric. The right one comes out
-			noticeably more symmetric.
+			Loading <code>cube.dae</code> and pressing <b>L</b> a few times gives a lopsided blob instead
+			of a symmetric rounded cube. The cause is the triangulation. Each square face of the cube is
+			cut by a single diagonal, and those diagonals leave the eight corners with uneven vertex
+			degrees: the two endpoints of each face diagonal pick up an extra edge, so some corners end up
+			with degree 6 while others stay at degree 3. Loop's vertex-update weight \(u = \frac{3}{8n}\)
+			depends on the degree \(n\), so corners of different degree are pulled toward their neighbors
+			by different amounts. That uneven pull is exactly what throws off the symmetry, and it only
+			gets more pronounced with each round.
 			</p>
 			<div class="grid">
-				<figure><img src="images/part6_cube_asym.png"/><figcaption>Cube subdivided as is (asymmetric result).</figcaption></figure>
-				<figure><img src="images/part6_cube_sym.png"/><figcaption>Cube subdivided after preprocessing (symmetric result).</figcaption></figure>
+				<figure><img src="images/part6_cube0.png"/><figcaption>Original cube.dae.</figcaption></figure>
+				<figure><img src="images/part6_cube1.png"/><figcaption>After 1 round (no preprocessing).</figcaption></figure>
+				<figure><img src="images/part6_cube2.png"/><figcaption>After 2 rounds.</figcaption></figure>
+				<figure><img src="images/part6_cube3.png"/><figcaption>After 3 rounds. The result is visibly lopsided.</figcaption></figure>
 			</div>
+
+			<h4>Fixing it with pre-processing</h4>
+			<p>
+			To make the cube subdivide symmetrically I split the diagonal edge of every face before
+			running any Loop subdivision. Splitting a face's diagonal drops a new vertex at the center of
+			that face and turns its two triangles into four, with the center vertex joined to all four
+			corners. After doing this to all six faces, every original corner touches three cube edges
+			plus three face-center edges, so all eight corners now have the same degree (6) and all six
+			face centers have the same degree (4). With the degrees made uniform and the configuration
+			identical at every corner, Loop pulls every vertex by the same weight, and the cube converges
+			to a symmetric rounded shape. Both cubes below are shown from the same camera after the same
+			three rounds of subdivision.
+			</p>
+			<div class="grid">
+				<figure><img src="images/part6_cube3.png"/><figcaption>No preprocessing: 3 rounds, asymmetric.</figcaption></figure>
+				<figure><img src="images/part6_cube_sym.png"/><figcaption>Face diagonals pre-split: 3 rounds, symmetric.</figcaption></figure>
+			</div>
+
+			<h4>Can pre-splitting keep sharp features?</h4>
+			<p>
+			Up to a point, yes. The reason sharp corners and edges wash out is that Loop only has a few
+			samples near them, so each averaging step pulls those few points well inside the original
+			crease. Splitting the edges near a feature before subdividing packs extra vertices right
+			there, so Loop has more local geometry to work with and the surface stays closer to the
+			original around that feature while the sparsely-sampled regions round off freely. In practice
+			the effect is gradual: a light pre-split only slows the rounding a little, and you need a fair
+			amount of extra density concentrated at the feature before a crease visibly holds its shape.
+			It's really a trade of mesh size for sharpness, which is why dedicated sharp-crease schemes
+			exist rather than relying on plain Loop.
+			</p>
 
 		</div>
 	</body>
