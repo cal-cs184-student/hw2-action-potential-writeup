@@ -282,6 +282,10 @@
 				<figure><img src="images/part4_before.png"/><figcaption>Before flipping (dae/teapot.dae).</figcaption></figure>
 				<figure><img src="images/part4_after.png"/><figcaption>After flipping several edges with <b>F</b>.</figcaption></figure>
 			</div>
+			<figure>
+				<img src="images/part4_closeup.png"/>
+				<figcaption>Close-up of a flipped cluster on the teapot body. The flipped edges stand out as long diagonals cutting across the otherwise regular triangulation.</figcaption>
+			</figure>
 
 			<h3>Part 5: Edge split</h3>
 			<p>
@@ -314,7 +318,7 @@
 				<figure><img src="images/part5_before.png"/><figcaption>Before any splits.</figcaption></figure>
 				<figure><img src="images/part5_split.png"/><figcaption>After splitting a few edges with <b>S</b>.</figcaption></figure>
 				<figure><img src="images/part5_flip_split.png"/><figcaption>A combination of flips and splits on the same region.</figcaption></figure>
-				<figure><img src="images/part5_detail.png"/><figcaption>Close-up showing the four triangles produced by one split.</figcaption></figure>
+				<figure><img src="images/part5_detail.png"/><figcaption>Close-up of a single split. The highlighted new vertex sits at the center of the four triangles the split produced (the panel confirms <code>degree() = 4</code>).</figcaption></figure>
 			</div>
 
 			<h3>Part 6: Loop subdivision for mesh upsampling</h3>
@@ -413,8 +417,14 @@
 			the effect is gradual: a light pre-split only slows the rounding a little, and you need a fair
 			amount of extra density concentrated at the feature before a crease visibly holds its shape.
 			It's really a trade of mesh size for sharpness, which is why dedicated sharp-crease schemes
-			exist rather than relying on plain Loop.
+			exist rather than relying on plain Loop. The pair below shows the experiment: both cubes are
+			subdivided the same number of times, but the one on the right had the edges around one corner
+			pre-split first, so that corner holds a tighter shape than the freely-rounded rest.
 			</p>
+			<div class="grid">
+				<figure><img src="images/part6_sharp_before.png"/><figcaption>No pre-splitting: the whole cube rounds off evenly.</figcaption></figure>
+				<figure><img src="images/part6_sharp_after.png"/><figcaption>Edges around one corner pre-split before subdividing: that corner stays comparatively sharper.</figcaption></figure>
+			</div>
 
 		</div>
 	</body>
