@@ -446,7 +446,10 @@
 			and \(m \to v_0\), keeping the boundary vertices (including the new \(m\)) pointed at a
 			boundary halfedge per the class convention.
 			</p>
-			<p><i>This can be checked in the app on the open meshes included in the repo (<code>dae/open_sheet.dae</code>, <code>dae/open_dome.dae</code>): selecting a rim edge shows <code>isBoundary() = 1</code>, and pressing <b>S</b> splits its single real triangle into two while the boundary loop stays intact.</i></p>
+			<div class="grid">
+				<figure><img src="images/part5_boundary_before.png"/><figcaption>A rim (boundary) edge selected on the open dome. The panel reads <code>isBoundary() = 1</code>.</figcaption></figure>
+				<figure><img src="images/part5_boundary_after.png"/><figcaption>After <b>S</b>: the single boundary triangle becomes two (the new face is highlighted) and the rim loop stays intact.</figcaption></figure>
+			</div>
 
 			<h3>Loop subdivision on meshes with boundary</h3>
 			<p>
@@ -458,7 +461,10 @@
 			closed meshes subdivide exactly as before, while an open mesh keeps a clean boundary instead
 			of tearing or collapsing.
 			</p>
-			<p><i>Likewise, pressing <b>L</b> on one of those open meshes subdivides it without tearing, and the boundary stays a clean edge rather than collapsing.</i></p>
+			<div class="grid">
+				<figure><img src="images/part6_boundary_before.png"/><figcaption>The open bowl before subdivision.</figcaption></figure>
+				<figure><img src="images/part6_boundary_after.png"/><figcaption>After Loop subdivision: smoother dome, and the open rim stays a clean boundary.</figcaption></figure>
+			</div>
 
 			<h3>Butterfly subdivision (<b>B</b> key)</h3>
 			<p>
