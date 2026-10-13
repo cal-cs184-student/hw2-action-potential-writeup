@@ -284,7 +284,7 @@
 			</div>
 			<figure>
 				<img src="images/part4_closeup.png"/>
-				<figcaption>Close-up of a flipped cluster on the teapot body. The flipped edges stand out as long diagonals cutting across the otherwise regular triangulation.</figcaption>
+				<figcaption>Detail of a flipped cluster on the teapot body. The flipped edges stand out as long diagonals cutting across the otherwise regular triangulation.</figcaption>
 			</figure>
 
 			<h3>Part 5: Edge split</h3>
@@ -399,8 +399,9 @@
 			plus three face-center edges, so all eight corners now have the same degree (6) and all six
 			face centers have the same degree (4). With the degrees made uniform and the configuration
 			identical at every corner, Loop pulls every vertex by the same weight, and the cube converges
-			to a symmetric rounded shape. Both cubes below are shown from the same camera after the same
-			three rounds of subdivision.
+			to a symmetric rounded shape. Both cubes below are subdivided the same three times. (The
+			symmetric one looks a little larger, partly because the extra pre-split vertices let it hold
+			its volume and shrink less than the plain cube.)
 			</p>
 			<div class="grid">
 				<figure><img src="images/part6_cube3.png"/><figcaption>No preprocessing: 3 rounds, asymmetric.</figcaption></figure>
@@ -424,6 +425,58 @@
 			<div class="grid">
 				<figure><img src="images/part6_sharp_before.png"/><figcaption>No pre-splitting: the whole cube rounds off evenly.</figcaption></figure>
 				<figure><img src="images/part6_sharp_after.png"/><figcaption>Edges around one corner pre-split before subdividing: that corner stays comparatively sharper.</figcaption></figure>
+			</div>
+
+			<h2>Extra Credit</h2>
+			<p>
+			These three features go beyond the required parts. They all live in the same
+			<code>student_code.cpp</code>: the boundary handling is built into <code>splitEdge</code>
+			and <code>upsample</code>, and Butterfly is a separate resampler bound to the <b>B</b> key.
+			For the boundary cases I included a couple of open meshes in the repo
+			(<code>dae/open_sheet.dae</code> and <code>dae/open_dome.dae</code>) whose perimeter is a boundary.
+			</p>
+
+			<h3>Boundary edge splits</h3>
+			<p>
+			A boundary edge has a real triangle on only one side; the other side is the virtual boundary
+			face. So instead of making four triangles, I split the single real triangle into two and
+			splice the new midpoint into the boundary loop. Concretely, I reorient so my interior halfedge
+			sits on the real face, split that triangle into \((v_0, m, v_2)\) and \((m, v_1, v_2)\), then
+			replace the one boundary halfedge \(v_1 \to v_0\) with two boundary halfedges \(v_1 \to m\)
+			and \(m \to v_0\), keeping the boundary vertices (including the new \(m\)) pointed at a
+			boundary halfedge per the class convention.
+			</p>
+			<p><i>This can be checked in the app on the open meshes included in the repo (<code>dae/open_sheet.dae</code>, <code>dae/open_dome.dae</code>): selecting a rim edge shows <code>isBoundary() = 1</code>, and pressing <b>S</b> splits its single real triangle into two while the boundary loop stays intact.</i></p>
+
+			<h3>Loop subdivision on meshes with boundary</h3>
+			<p>
+			With boundary splits working, Loop extends to open meshes. Two rules change. A boundary edge
+			has no pair of opposite vertices, so its midpoint is simply \(\frac{1}{2}(A + B)\) rather than
+			the \(\frac{3}{8}/\frac{1}{8}\) stencil. And a boundary vertex is smoothed like a point on a
+			cubic B-spline curve, using only its two boundary neighbors:
+			\(\frac{3}{4}\,v + \frac{1}{8}(n_1 + n_2)\). Interior vertices and edges are untouched, so
+			closed meshes subdivide exactly as before, while an open mesh keeps a clean boundary instead
+			of tearing or collapsing.
+			</p>
+			<p><i>Likewise, pressing <b>L</b> on one of those open meshes subdivides it without tearing, and the boundary stays a clean edge rather than collapsing.</i></p>
+
+			<h3>Butterfly subdivision (<b>B</b> key)</h3>
+			<p>
+			Butterfly is a second subdivision scheme, invoked with the <b>B</b> key. Its topology step is
+			identical to Loop (split every edge, flip the new old-to-new edges), so it reuses the same
+			machinery. The difference is the geometry: Butterfly is <i>interpolating</i> rather than
+			approximating. The original vertices never move, and each new edge vertex is placed with an
+			8-point stencil,
+			\[ p = \tfrac{1}{2}(a + b) + \tfrac{1}{8}(c + d) - \tfrac{1}{16}(e + f + g + h), \]
+			where \(a, b\) are the edge endpoints, \(c, d\) the two opposite wing vertices, and
+			\(e, f, g, h\) the four outer wings reached by hopping across the neighboring triangles.
+			Because the old vertices stay fixed, Butterfly keeps the surface passing through the original
+			points, so it shrinks less than Loop, though it can look slightly less smooth at irregular
+			vertices.
+			</p>
+			<div class="grid">
+				<figure><img src="images/part6_loop_vs.png"/><figcaption>Cube, Loop &times;2 (approximating): the corners pull inward and it rounds into a blob.</figcaption></figure>
+				<figure><img src="images/part6_butterfly_vs.png"/><figcaption>Cube, Butterfly &times;2 (interpolating): the original corners stay fixed, so it keeps a cube-like shape.</figcaption></figure>
 			</div>
 
 		</div>
